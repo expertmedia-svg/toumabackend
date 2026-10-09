@@ -12,7 +12,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 // Middleware
 app.disable('x-powered-by');
 if (process.env.TOUMA_TRUST_LOCAL_PROXY === '1') app.set('trust proxy', 'loopback');
-app.use(cors({ origin: process.env.TOUMA_ORIGIN ? process.env.TOUMA_ORIGIN.split(',') : ['http://localhost:5173','http://127.0.0.1:5173'] }));
+app.use(cors({ origin: process.env.TOUMA_ORIGIN ? process.env.TOUMA_ORIGIN.split(',') : ['http://localhost:5173','http://127.0.0.1:5173'], exposedHeaders:['Content-Disposition'] }));
 app.use((req,res,next) => {
   res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('Cache-Control','no-store');
@@ -44,6 +44,7 @@ app.get('/uploads/:filename', authMiddleware, (req,res) => {
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/admin/referrals', require('./routes/referrals'));
 app.use('/api', require('./routes/platform'));
 app.use('/api/saas', require('./routes/saas'));
 app.use('/api', require('./routes/management'));
@@ -55,7 +56,7 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     service: 'TOUMA Micro-Tasks Engine API',
     version: '1.0.0',
-    features: ['saas','professional-web'],
+    features: ['saas','professional-web','referral-v1'],
     timestamp: new Date().toISOString()
   });
 });

@@ -279,26 +279,7 @@ router.post('/wallet/withdraw', authMiddleware, requireRole(['contributor']), (r
 // 5. REFERRAL & NOTIFICATIONS
 // ==========================================
 
-router.get('/referral', authMiddleware, (req, res) => {
-  const settingsRow = db.prepare("SELECT value FROM platform_settings WHERE key = 'referral_reward'").get();
-  const rewardAmount = settingsRow ? JSON.parse(settingsRow.value) : 500;
-
-  const referrals = db.prepare(`
-    SELECT r.*, u.name as referred_name, u.created_at as joined_at
-    FROM referrals r
-    JOIN users u ON r.referred_user_id = u.id
-    WHERE r.referrer_user_id = ?
-  `).all(req.user.id);
-
-  res.json({
-    referral_code: req.user.referral_code,
-    share_url: process.env.TOUMA_PUBLIC_URL ? `${process.env.TOUMA_PUBLIC_URL}/?ref=${encodeURIComponent(req.user.referral_code)}` : null,
-    reward_amount: rewardAmount,
-    currency: 'F CFA',
-    referrals_count: referrals.length,
-    referrals
-  });
-});
+router.get('/referral', authMiddleware, (req,res)=>res.json(require('../services/referralService').summary(req.user,req.query)));
 
 router.get('/notifications', authMiddleware, (req, res) => {
   const notifs = db.prepare(`

@@ -277,6 +277,8 @@ db.transaction(()=>{
  db.exec('ALTER TABLE users ADD COLUMN city_confirmed INTEGER NOT NULL DEFAULT 0; INSERT INTO schema_migrations(version) VALUES(4);');
 }).immediate();
 
+require('./referralMigration')(db);
+
 module.exports = {
   db,
   initSchema

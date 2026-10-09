@@ -75,6 +75,7 @@ function validateAndCreditSubmission(submissionId, reviewerId = 'system') {
     );
 
     // 5. Update campaign stats
+    require('./referralService').addLot(sub.contributor_id,'task_reward',txId,sub.reward_amount);
     db.prepare(`
       UPDATE campaigns
       SET completed_submissions = completed_submissions + 1
@@ -93,7 +94,7 @@ function validateAndCreditSubmission(submissionId, reviewerId = 'system') {
 
     // 7. Update contributor score & reputation level
     updateContributorScore(sub.contributor_id, 5); // +5 points for valid task
-    const referral = db.prepare("SELECT * FROM referrals WHERE referred_user_id=? AND status='pending'").get(sub.contributor_id);
+    const referral = db.prepare("SELECT * FROM referrals WHERE referred_user_id=? AND status='pending' AND program_version=0").get(sub.contributor_id);
     if(referral) {
       const refWallet = db.prepare('SELECT * FROM wallets WHERE user_id=?').get(referral.referrer_user_id);
       if(refWallet && Number.isSafeInteger(referral.bonus_amount) && referral.bonus_amount>0) {
@@ -148,8 +149,10 @@ function processWithdrawal(userId, amount, operator, phoneNumber, idempotencyKey
     const wallet = db.prepare('SELECT * FROM wallets WHERE user_id=?').get(userId);
     if (!wallet || wallet.balance < amount) throw new WalletError('Solde disponible insuffisant');
     const id = 'wdr_' + uuidv4();
-    db.prepare('UPDATE wallets SET balance=balance-?,reserved_balance=reserved_balance+?,updated_at=CURRENT_TIMESTAMP WHERE id=?').run(amount,amount,wallet.id);
     db.prepare("INSERT INTO withdrawals(id,user_id,amount,net_amount,operator,phone_number,status,idempotency_key) VALUES(?,?,?,?,?,?,'pending',?)").run(id,userId,amount,amount,operator,phoneNumber,idempotencyKey);
+    if(db.prepare('SELECT 1 FROM referrals WHERE referred_user_id=? AND payments_suspended=1').get(userId))throw new WalletError('Retraits temporairement suspendus : contactez Touma');
+    require('./referralService').allocateWithdrawal(userId,id,amount);
+    db.prepare('UPDATE wallets SET balance=balance-?,reserved_balance=reserved_balance+?,updated_at=CURRENT_TIMESTAMP WHERE id=?').run(amount,amount,wallet.id);
     db.prepare("INSERT INTO wallet_transactions(id,wallet_id,user_id,type,amount,balance_after,description,reference_type,reference_id,status) VALUES(?,?,?,'withdrawal',?,?,?,'withdrawal',?,'pending')").run(uuidv4(),wallet.id,userId,-amount,wallet.balance-amount,`Fonds réservés : ${operator}`,id);
     db.prepare("INSERT INTO notifications(id,user_id,type,title,message) VALUES(?,?,'payment','Demande de retrait enregistrée',?)").run(uuidv4(),userId,'Fonds réservés. Paiement non confirmé ; intégration du prestataire requise.');
     return { success:true,withdrawal_id:id,status:'pending',new_balance:wallet.balance-amount,amount,payment_confirmed:false };

@@ -40,18 +40,7 @@ router.put('/admin/campaigns/:id/status',requireRole(['admin']),(req,res)=>{
 });
 router.get('/admin/withdrawals',requireRole(['admin']),(req,res)=>res.json(db.prepare('SELECT * FROM withdrawals ORDER BY created_at DESC').all()));
 router.post('/admin/withdrawals/:id/reject',requireRole(['admin']),(req,res)=>{
- try {
-  db.transaction(()=>{
-   const w=db.prepare('SELECT * FROM withdrawals WHERE id=?').get(req.params.id);
-   if(!w || w.status!=='pending') throw new Error('Demande non annulable');
-   db.prepare("UPDATE withdrawals SET status='rejected',failure_reason=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").run(req.body.reason||'Demande annulée',w.id);
-   const wallet=db.prepare('SELECT * FROM wallets WHERE user_id=?').get(w.user_id);
-   db.prepare('UPDATE wallets SET balance=balance+?,reserved_balance=reserved_balance-? WHERE user_id=?').run(w.amount,w.amount,w.user_id);
-   db.prepare("UPDATE wallet_transactions SET status='failed' WHERE reference_id=? AND type='withdrawal'").run(w.id);
-   db.prepare("INSERT INTO wallet_transactions(id,wallet_id,user_id,type,amount,balance_after,description,reference_type,reference_id) VALUES(?,?,?,'adjustment',?,?,'Libération des fonds réservés','withdrawal_reversal',?)").run(crypto.randomUUID(),wallet.id,w.user_id,w.amount,wallet.balance+w.amount,w.id);
-   audit(req,'reject','withdrawal',w.id);
-  }).immediate();res.json({success:true});
- }catch(e){res.status(400).json({error:e.message});}
+ try {db.transaction(()=>{const result=require('../services/referralService').rejectWithdrawal(req.params.id,req.body.reason||'Demande annulée');if(result.duplicate)throw new Error('Demande déjà annulée');audit(req,'reject','withdrawal',req.params.id);}).immediate();res.json({success:true});}catch(e){res.status(e.status||400).json({error:e.message});}
 });
 router.get('/admin/transactions',requireRole(['admin']),(req,res)=>res.json(db.prepare('SELECT * FROM wallet_transactions ORDER BY created_at DESC LIMIT 500').all()));
 router.get('/admin/audit',requireRole(['admin']),(req,res)=>res.json(db.prepare('SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 500').all()));

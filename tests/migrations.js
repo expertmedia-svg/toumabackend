@@ -14,7 +14,7 @@ try{
  legacy.prepare('INSERT INTO wallets(id,user_id,balance,total_earned) VALUES(?,?,?,?)').run('w','u',25,25);
  legacy.prepare('INSERT INTO wallet_transactions(id,wallet_id,user_id,type,amount,balance_after,description,reference_id) VALUES(?,?,?,?,?,?,?,?)').run('tx','w','u','task_reward',25,25,'Crédit existant','s');legacy.close();
  upgraded=require('../src/db/database').db;
- assert.deepEqual(upgraded.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map(v=>v.version),[1,2,3,4]);
+ assert.deepEqual(upgraded.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map(v=>v.version),[1,2,3,4,5]);
  assert.equal(upgraded.prepare('SELECT balance FROM wallets').get().balance,25);
  assert.equal(upgraded.prepare('SELECT COUNT(*) n FROM wallet_transactions').get().n,1);
  assert.equal(upgraded.prepare('SELECT password_hash FROM users').get().password_hash,'preserved-hash');
@@ -26,5 +26,5 @@ try{
  assert.equal(upgraded.prepare('SELECT COUNT(*) n FROM submission_versions').get().n,1);
  assert.equal(upgraded.prepare('SELECT COUNT(*) n FROM wallet_transactions').get().n,1);
  assert.equal(upgraded.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
- console.log('PASS legacy database upgrade and restart: accounts, responses and credit preserved; four additive migrations, no invented city');
+ console.log('PASS legacy database upgrade and restart: accounts, responses and credit preserved; five additive migrations, no invented city');
 }finally{if(upgraded?.open)upgraded.close();fs.rmSync(temp,{recursive:true,force:true});}

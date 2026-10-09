@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "seed": "node src/db/seed.js",
-    "test": "node tests/integration.js && node tests/saas.js && node tests/migrations.js && node tests/yaarSetup.js",
+    "test": "node tests/integration.js && node tests/saas.js && node tests/migrations.js && node tests/yaarSetup.js && node tests/referrals.js",
     "create-admin": "node scripts/create-admin.js"
   },
   "dependencies": {
