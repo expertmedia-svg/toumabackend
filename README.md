@@ -6,6 +6,8 @@ Ce dépôt contient uniquement le backend Node/Express/SQLite. Admin/Entreprise 
 
 ## Lancement
 
+Node.js 22 minimum est requis par `better-sqlite3`. Avec nvm, exécuter `nvm install` puis `nvm use` dans ce dossier. L’installation refuse une version incompatible grâce à `engine-strict`.
+
 ```sh
 npm ci
 npm start
