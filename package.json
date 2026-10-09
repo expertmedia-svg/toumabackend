@@ -1,0 +1,26 @@
+{
+  "name": "touma-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Touma Paid Micro-Tasks Platform",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "seed": "node src/db/seed.js",
+    "test": "node tests/integration.js && node tests/saas.js && node tests/migrations.js && node tests/yaarSetup.js",
+    "create-admin": "node scripts/create-admin.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "pdfkit": "^0.20.2",
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "multer": "^2.4.0",
+    "uuid": "^14.0.2"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.touma-runtime/
+data/
+uploads/
+private-documents/
+*.log
+*.db
+*.db-shm
+*.db-wal

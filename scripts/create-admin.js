@@ -1,0 +1,10 @@
+const crypto = require('crypto');
+const {db} = require('../src/db/database');
+const {hashPassword}=require('../src/middleware/auth');
+const email=process.env.TOUMA_ADMIN_EMAIL;
+const password=process.env.TOUMA_ADMIN_PASSWORD;
+if(!email || !password || password.length<12) throw new Error('Définissez TOUMA_ADMIN_EMAIL et TOUMA_ADMIN_PASSWORD (12 caractères minimum)');
+if(db.prepare("SELECT id FROM users WHERE role IN ('admin','super_admin')").get()) throw new Error('Un administrateur existe déjà');
+db.prepare("INSERT INTO users(id,name,email,password_hash,role,referral_code) VALUES(?,?,?,?, 'super_admin',?)").run(crypto.randomUUID(),'Administrateur Touma',email.toLowerCase(),hashPassword(password),crypto.randomBytes(6).toString('hex'));
+console.log('Administrateur créé. Aucun solde ou paiement ajouté.');
+db.close();
